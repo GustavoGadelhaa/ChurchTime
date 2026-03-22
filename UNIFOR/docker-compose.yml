@@ -1,12 +1,13 @@
 services:
   postgres:
     image: postgres:16-alpine
+    container_name: church-postgres
+
+    network_mode: host
     environment:
       POSTGRES_DB: church
       POSTGRES_USER: church
       POSTGRES_PASSWORD: church
-    ports:
-      - "5432:5432"
     volumes:
       - church_pg_data:/var/lib/postgresql/data
 
