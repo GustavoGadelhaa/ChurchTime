@@ -11,7 +11,7 @@ spring:
     username: sa
     password:
 
-app:
+security:
   jwt:
-    secret: test-secret-key-for-jwt-signing-32bytes!!
-    expiration-ms: 3600000
+    secret-key: Y2h1cmNoLWp3dC1zZWNyZXQta2V5LTMyLWJ5dGVzISE=
+    expiration-time: 3600000

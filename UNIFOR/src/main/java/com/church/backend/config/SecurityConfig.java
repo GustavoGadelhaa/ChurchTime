@@ -1,5 +1,7 @@
 package com.church.backend.config;
 
+import com.church.backend.config.security.AccountUserDetailsService;
+import com.church.backend.config.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,7 +29,7 @@ import java.util.List;
 public class SecurityConfig {
 
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
-	private final DomainUserDetailsService userDetailsService;
+	private final AccountUserDetailsService userDetailsService;
 
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

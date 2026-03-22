@@ -16,10 +16,11 @@ spring:
   flyway:
     enabled: true
 
-app:
+# Chave HS256 em Base64 (mín. 32 bytes decodificados). Gerar: openssl rand -base64 32
+security:
   jwt:
-    secret: ${JWT_SECRET:changeme-please-use-at-least-256-bits-secret-key!!}
-    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+    secret-key: ${JWT_SECRET_BASE64:Y2h1cmNoLWp3dC1zZWNyZXQta2V5LTMyLWJ5dGVzISE=}
+    expiration-time: ${JWT_EXPIRATION_MS:86400000}
 
 server:
   servlet:
