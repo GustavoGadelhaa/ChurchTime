@@ -26,7 +26,7 @@ public class AuthService {
 
 	@Transactional(readOnly = true)
 	public TokenResponse login(LoginRequest request) {
-		String email = request.email().trim();
+		String email = request.email();
 		authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, request.password()));
 		var user = userRepository.findByEmailIgnoreCase(email).orElseThrow();
 		return new TokenResponse(jwtService.generate(user));
@@ -34,19 +34,15 @@ public class AuthService {
 
 	@Transactional
 	public TokenResponse register(RegisterRequest request) {
-		String email = request.email().trim().toLowerCase();
+		String email = request.email();
 		if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
 			throw new BadRequestException("E-mail já cadastrado");
 		}
-		String phone = request.phone() != null ? request.phone().trim() : null;
-		if (phone != null && phone.isEmpty()) {
-			phone = null;
-		}
 		User user = User.builder()
-				.name(request.name().trim())
+				.name(request.name())
 				.email(email)
 				.passwordHash(passwordEncoder.encode(request.password()))
-				.phone(phone)
+				.phone(request.phone())
 				.role(UserRole.MEMBER)
 				.build();
 		user = userRepository.save(user);
