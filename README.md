@@ -388,15 +388,21 @@ Validação (`400`):
 
 ---
 
-## 8. Dados mock do seed (Flyway `V2__seed_dev.sql`)
+## 8. Dados mock (Flyway `V2__seed_dev.sql` + `V3__mock_data.sql`)
 
-| Item        | Valor (exemplo)        |
-|------------|-------------------------|
-| Igreja     | `id = 1`                |
-| Grupo      | `id = 1`                |
-| Admin      | `admin@church.local` / `admin123` |
+**Senha comum dos usuários de teste:** `admin123` (inclui admin, líderes e membros do mock).
 
-Com apenas o seed, use o **admin** para criar usuários **MEMBER** no grupo `1`, abrir um evento como **OPEN** e então testar check-in com o token do membro.
+| Papel   | E-mail                      | Notas                          |
+|---------|-----------------------------|--------------------------------|
+| ADMIN   | `admin@church.local`        | Igreja 1, grupo 1 demo         |
+| LEADER  | `carlos.lider@church.local` | Líder do grupo `1`             |
+| MEMBER  | `ana@church.local`          | Grupo `1`; já tem check-in no evento `3` (OPEN) |
+| MEMBER  | `bruno@church.local`        | Grupo `1`                      |
+| MEMBER  | `carla@church.local`        | Grupo `1`                      |
+| LEADER  | `diana@church.local`        | Igreja 2, grupo `2`            |
+| MEMBER  | `edu@church.local`          | Grupo `2`                      |
+
+Eventos úteis: grupo `1` — evento `3` **OPEN** (check-in com membro); evento `2` **CLOSED** (histórico de presenças). Igreja extra: `id = 2` (“Comunidade Boa Vista”), grupo `id = 2`.
 
 ---
 
