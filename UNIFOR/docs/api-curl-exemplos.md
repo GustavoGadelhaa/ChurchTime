@@ -1,6 +1,6 @@
 # API Church Backend — exemplos com `curl`
 
-Base URL padrão: `http://localhost:8080`. Todos os endpoints (exceto login) exigem header:
+Base URL padrão: `http://localhost:8080`. Todos os endpoints (exceto **login** e **registro**) exigem header:
 
 ```http
 Authorization: Bearer <accessToken>
@@ -47,6 +47,23 @@ Resposta esperada (exemplo):
   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
+
+### `POST /api/auth/register`
+
+Cria conta pública com papel **MEMBER** (sem grupo; um **ADMIN** pode associar depois com `PUT /api/users/{id}/group`). Resposta **201** com o mesmo formato do login (JWT para usar já autenticado).
+
+```bash
+curl -s -w "\n%{http_code}\n" -X POST "$BASE/api/auth/register" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "Novo Membro",
+    "email": "novo.membro@example.com",
+    "password": "senha123",
+    "phone": "85999991111"
+  }'
+```
+
+O campo `phone` é opcional (pode omitir ou enviar `null`).
 
 ---
 

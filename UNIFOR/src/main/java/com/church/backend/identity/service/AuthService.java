@@ -2,11 +2,16 @@ package com.church.backend.identity.service;
 
 import com.church.backend.config.JwtService;
 import com.church.backend.identity.dto.AuthDtos.LoginRequest;
+import com.church.backend.identity.dto.AuthDtos.RegisterRequest;
 import com.church.backend.identity.dto.AuthDtos.TokenResponse;
+import com.church.backend.identity.entity.User;
+import com.church.backend.identity.entity.UserRole;
 import com.church.backend.identity.repository.UserRepository;
+import com.church.backend.shared.exception.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,12 +22,34 @@ public class AuthService {
 	private final AuthenticationManager authenticationManager;
 	private final UserRepository userRepository;
 	private final JwtService jwtService;
+	private final PasswordEncoder passwordEncoder;
 
 	@Transactional(readOnly = true)
 	public TokenResponse login(LoginRequest request) {
 		String email = request.email().trim();
 		authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, request.password()));
 		var user = userRepository.findByEmailIgnoreCase(email).orElseThrow();
+		return new TokenResponse(jwtService.generate(user));
+	}
+
+	@Transactional
+	public TokenResponse register(RegisterRequest request) {
+		String email = request.email().trim().toLowerCase();
+		if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
+			throw new BadRequestException("E-mail já cadastrado");
+		}
+		String phone = request.phone() != null ? request.phone().trim() : null;
+		if (phone != null && phone.isEmpty()) {
+			phone = null;
+		}
+		User user = User.builder()
+				.name(request.name().trim())
+				.email(email)
+				.passwordHash(passwordEncoder.encode(request.password()))
+				.phone(phone)
+				.role(UserRole.MEMBER)
+				.build();
+		user = userRepository.save(user);
 		return new TokenResponse(jwtService.generate(user));
 	}
 }
