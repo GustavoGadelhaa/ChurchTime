@@ -11,11 +11,13 @@ import com.church.backend.shared.exception.NotFoundException;
 import com.church.backend.shared.security.AccessPolicy;
 import com.church.backend.shared.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -98,4 +100,14 @@ public class EventService {
 				event.getCreatedAt()
 		);
 	}
+
+	public void markAsReminded(List<Long> eventIds){
+		for (Long events:eventIds){
+			log.info("evento de ID {} marcado como reminded",events);
+			eventRepository.markAsReminded(events);
+		}
+
+	}
+
+
 }

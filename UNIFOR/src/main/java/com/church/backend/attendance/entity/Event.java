@@ -42,6 +42,10 @@ public class Event {
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private Instant createdAt;
 
+	@Builder.Default
+	@Column(name = "reminded", nullable = false)
+	private boolean reminded = false;
+
 	@OneToMany(mappedBy = "event", fetch = FetchType.LAZY)
 	@Builder.Default
 	private List<Presence> presences = new ArrayList<>();

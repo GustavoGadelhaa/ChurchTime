@@ -38,7 +38,8 @@ CREATE TABLE events (
     location VARCHAR(255),
     event_date TIMESTAMP NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'SCHEDULED',
-    created_at TIMESTAMP NOT NULL
+    created_at TIMESTAMP NOT NULL,
+    reminded BOOLEAN default FALSE
 );
 
 CREATE TABLE presences (
