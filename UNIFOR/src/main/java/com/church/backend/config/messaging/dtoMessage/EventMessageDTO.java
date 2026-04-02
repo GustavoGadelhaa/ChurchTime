@@ -1,6 +1,7 @@
 package com.church.backend.config.messaging.dtoMessage;
 
-import com.church.backend.attendance.entity.EventStatus;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,9 +13,14 @@ import java.sql.Timestamp;
 @NoArgsConstructor
 @Data
 public class EventMessageDTO {
-    Long id;
-    String title;
-    String location;
-    Timestamp event_date;
-    Long group_id;
+	@NotNull
+	Long id;
+	@NotBlank
+	String title;
+	@NotBlank
+	String location;
+	@NotNull
+	Timestamp event_date;
+	@NotNull
+	Long group_id;
 }
