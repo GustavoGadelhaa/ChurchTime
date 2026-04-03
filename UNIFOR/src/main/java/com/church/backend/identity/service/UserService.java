@@ -57,13 +57,12 @@ public class UserService {
 		if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
 			throw new BadRequestException("E-mail já cadastrado");
 		}
-		UserRole role = request.role() != null ? request.role() : UserRole.MEMBER;
 		User user = User.builder()
 				.name(request.name().trim())
 				.email(email)
 				.passwordHash(passwordEncoder.encode(request.password()))
 				.phone(trimToNull(request.phone()))
-				.role(role)
+				.role(UserRole.MEMBER)
 				.build();
 		if (request.groupId() != null) {
 			var group = groupService.requireActiveGroup(request.groupId());
@@ -81,6 +80,9 @@ public class UserService {
 				throw new BadRequestException("E-mail já cadastrado");
 			}
 		});
+		if (request.role() == UserRole.ADMIN && user.getRole() != UserRole.ADMIN) {
+			throw new BadRequestException("Papel de administrador só pode ser definido diretamente no banco de dados");
+		}
 		user.setName(request.name().trim());
 		user.setEmail(email);
 		user.setPhone(trimToNull(request.phone()));
