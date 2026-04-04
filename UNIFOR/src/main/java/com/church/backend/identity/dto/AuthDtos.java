@@ -49,6 +49,24 @@ public final class AuthDtos {
 	public record TokenResponse(String accessToken) {
 	}
 
+	public record ForgotPasswordRequest(
+			@NotBlank(message = "E-mail é obrigatório")
+			@Email(message = "E-mail inválido")
+			@JsonDeserialize(using = NormalizedEmailJsonDeserializer.class)
+			String email
+	) {
+	}
+
+	public record ResetPasswordRequest(
+			@NotBlank(message = "Token é obrigatório")
+			@Size(min = 6, max = 6, message = "Token deve ter 6 dígitos")
+			String token,
+			@NotBlank(message = "Nova senha é obrigatória")
+			@Size(min = 6, max = 100, message = "Senha deve ter entre 6 e 100 caracteres")
+			String newPassword
+	) {
+	}
+
 	public static final class TrimJsonDeserializer extends JsonDeserializer<String> {
 
 		@Override
