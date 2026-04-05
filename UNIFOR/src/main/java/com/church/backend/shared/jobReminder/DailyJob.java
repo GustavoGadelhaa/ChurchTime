@@ -28,7 +28,7 @@ public class DailyJob {
 	 * A cada 10 minutos (UTC): marca {@code reminded} nos eventos elegíveis e usa a lista retornada
 	 * apenas dentro deste método (assinatura {@code void}).
 	 */
-	@Scheduled(fixedRate = 20000) // 10 segundos em milissegundos
+
 	public void dailyJobReminder() {
 		Instant now = Instant.now();
 		log.info("Buscando eventos entre {} e {}", now, now.plus(6, ChronoUnit.HOURS));

@@ -1,23 +1,33 @@
-# ChurchTime - Documentação Completa
+# ChurchTime - Documentação para o Frontend
 
 ## Visão Geral
 
-**ChurchTime** (Church Presence MVP) é um backend em Java/Spring Boot para gerenciamento de presença em eventos de igrejas. O sistema organiza igrejas, grupos (células/ministérios), usuários e eventos com controle de check-in.
+**ChurchTime** é um backend em Java/Spring Boot para gerenciamento de presença em eventos de igrejas. O sistema organiza igrejas, grupos (células/ministérios), usuários e eventos com controle de check-in.
 
 ### Tech Stack
 
 | Camada | Tecnologia |
 |---|---|
-| Linguagem | Java 21 |
-| Framework | Spring Boot 3.4.5 |
+| Backend | Java 21 + Spring Boot 3.4.5 |
 | Banco de Dados | PostgreSQL 16 |
-| ORM | Spring Data JPA (Hibernate) |
-| Migrações | Flyway |
 | Autenticação | JWT (HS256) + Spring Security |
 | Mensageria | RabbitMQ |
-| Build | Maven |
-| Containerização | Docker Compose |
-| Frontend esperado | Angular (localhost:4200) |
+| Frontend | Angular 18+ (localhost:4200) |
+
+### URL Base
+
+- **Dev:** `http://localhost:8080/api`
+- **Prod:** `https://api.churchtime.com.br/api`
+
+### Autenticação
+
+Todas as rotas (exceto login, registro e recuperação de senha) exigem o header:
+
+```
+Authorization: Bearer <JWT_TOKEN>
+```
+
+O token é retornado no login/registro no campo `accessToken`. Armazene em `localStorage`.
 
 ---
 
@@ -31,326 +41,190 @@ Church (1) ────< (N) Group (1) ────< (N) User
                         └───< (N) Event ────────────┘
 ```
 
-### Modelos
-
-| Entidade | Tabela | Campos Principais |
-|---|---|---|
-| **Church** | `churches` | id, name, active, created_at |
-| **Group** | `groups` | id, church_id, leader_id, name, description, active, created_at |
-| **User** | `users` | id, group_id, name, email, password_hash, phone, role, active, created_at, updated_at |
-| **Event** | `events` | id, group_id, title, location, event_date, status, created_at, reminded |
-| **Presence** | `presences` | id, event_id, user_id, checked_in_at |
-
 ### Roles
 
-| Role | Escopo |
+| Role | O que pode fazer |
 |---|---|
 | `ADMIN` | Acesso total a tudo |
-| `LEADER` | CRUD nos grupos que lidera, eventos e presenças associadas |
-| `MEMBER` | Check-in em eventos OPEN do seu grupo |
+| `LEADER` | CRUD nos grupos que lidera, eventos e presenças |
+| `MEMBER` | Ver grupos da sua igreja, trocar de grupo, check-in em eventos OPEN |
 
 ### Status de Evento
 
 | Status | Significado |
 |---|---|
-| `SCHEDULED` | Evento agendado, ainda não aberto |
-| `OPEN` | Evento aberto para check-in |
-| `CLOSED` | Evento encerrado |
+| `SCHEDULED` | Agendado, ainda não aberto |
+| `OPEN` | Aberto para check-in |
+| `CLOSED` | Encerrado |
 
 ---
 
-## Listagem Completa de Endpoints
+## Endpoints da API
 
-### Autenticação (público)
+### Autenticação (público — sem token)
 
 | Método | Path | Descrição | Body | Resposta |
 |---|---|---|---|---|
-| `POST` | `/api/auth/login` | Login com email/senha | `{ email, password }` | `{ token }` |
-| `POST` | `/api/auth/register` | Auto-registro (role=MEMBER) | `{ name, email, password, phone }` | `{ token }` |
-
----
+| `POST` | `/api/auth/login` | Login | `{ email, password }` | `{ accessToken }` |
+| `POST` | `/api/auth/register` | Auto-registro (MEMBER) | `{ name, email, password, phone? }` | `{ accessToken }` |
+| `POST` | `/api/auth/forgot-password` | Solicitar código de recuperação | `{ email }` | `200` (vazio) |
+| `POST` | `/api/auth/reset-password` | Redefinir senha com código | `{ token, newPassword }` | `200` (vazio) |
 
 ### Igrejas (ADMIN)
 
-| Método | Path | Descrição | Body | Auth |
-|---|---|---|---|---|
-| `POST` | `/api/churches` | Criar igreja | `{ name }` | ADMIN |
-| `GET` | `/api/churches` | Listar igrejas ativas | — | ADMIN |
-| `GET` | `/api/churches/{id}` | Buscar igreja por ID | — | ADMIN |
-| `PUT` | `/api/churches/{id}` | Atualizar nome da igreja | `{ name }` | ADMIN |
-| `DELETE` | `/api/churches/{id}` | Soft delete da igreja | — | ADMIN |
+| Método | Path | Descrição | Body |
+|---|---|---|---|
+| `POST` | `/api/churches` | Criar igreja | `{ name }` |
+| `GET` | `/api/churches` | Listar igrejas ativas | — |
+| `GET` | `/api/churches/{id}` | Buscar igreja | — |
+| `PUT` | `/api/churches/{id}` | Atualizar igreja | `{ name }` |
+| `DELETE` | `/api/churches/{id}` | Soft delete | — |
 
----
-
-### Grupos (células/ministérios)
+### Grupos (ADMIN, LEADER)
 
 | Método | Path | Descrição | Body | Auth |
 |---|---|---|---|---|
-| `POST` | `/api/churches/{churchId}/groups` | Criar grupo | `{ name, description }` | ADMIN |
+| `POST` | `/api/churches/{churchId}/groups` | Criar grupo | `{ name, description? }` | ADMIN |
 | `GET` | `/api/churches/{churchId}/groups` | Listar grupos da igreja | — | ADMIN, LEADER |
-| `GET` | `/api/groups/{id}` | Buscar grupo por ID | — | ADMIN, LEADER |
-| `PUT` | `/api/groups/{id}` | Atualizar grupo | `{ name, description }` | ADMIN |
-| `PUT` | `/api/groups/{id}/leader` | Atribuir/remover líder | `{ leaderId }` | ADMIN |
-| `DELETE` | `/api/groups/{id}` | Soft delete do grupo | — | ADMIN |
+| `GET` | `/api/groups/{id}` | Buscar grupo | — | ADMIN, LEADER |
+| `PUT` | `/api/groups/{id}` | Atualizar grupo | `{ name, description? }` | ADMIN |
+| `PUT` | `/api/groups/{id}/leader` | Atribuir/remover líder | `{ leaderUserId }` | ADMIN |
+| `DELETE` | `/api/groups/{id}` | Soft delete | — | ADMIN |
 
----
+### Grupos — Acesso do Membro (qualquer role autenticada)
 
-### Usuários
+| Método | Path | Descrição | Body |
+|---|---|---|---|
+| `GET` | `/api/groups/my-church` | Listar todos os grupos ativos da igreja do usuário | — |
+| `PUT` | `/api/groups/{id}/join` | Membro entra em outro grupo da mesma igreja | — |
 
-| Método | Path | Descrição | Body | Auth |
-|---|---|---|---|---|
-| `POST` | `/api/users` | Criar usuário | `{ name, email, password, phone, role, groupId }` | ADMIN |
-| `GET` | `/api/users` | Listar usuários ativos | — | ADMIN |
-| `GET` | `/api/users/{id}` | Buscar usuário por ID | — | ADMIN, LEADER |
-| `GET` | `/api/groups/{groupId}/users` | Listar usuários do grupo | — | ADMIN, LEADER |
-| `PUT` | `/api/users/{id}` | Atualizar usuário | `{ name, email, phone, role, groupId }` | ADMIN |
-| `PUT` | `/api/users/{id}/group` | Mover usuário de grupo | `{ groupId }` | ADMIN |
-| `DELETE` | `/api/users/{id}` | Soft delete do usuário | — | ADMIN |
+**Regras do join:**
+- Apenas role `MEMBER` pode usar
+- O membro já precisa ter um grupo associado (para identificar a igreja)
+- O grupo de destino deve estar ativo e pertencer à mesma igreja
 
----
+### Usuários (ADMIN)
 
-### Eventos
+| Método | Path | Descrição | Body |
+|---|---|---|---|
+| `POST` | `/api/users` | Criar usuário | `{ name, email, password, phone?, role, groupId? }` |
+| `GET` | `/api/users` | Listar usuários ativos | — |
+| `GET` | `/api/users/{id}` | Buscar usuário | — |
+| `GET` | `/api/groups/{groupId}/users` | Listar usuários do grupo | — |
+| `PUT` | `/api/users/{id}` | Atualizar usuário | `{ name, email, phone?, role, password? }` |
+| `PUT` | `/api/users/{id}/group` | Mover usuário de grupo | `{ groupId }` |
+| `DELETE` | `/api/users/{id}` | Soft delete | — |
 
-| Método | Path | Descrição | Body | Auth |
-|---|---|---|---|---|
-| `POST` | `/api/groups/{groupId}/events` | Criar evento | `{ title, location, eventDate, status }` | ADMIN, LEADER |
-| `GET` | `/api/groups/{groupId}/events` | Listar eventos do grupo | — | ADMIN, LEADER |
-| `GET` | `/api/events/{id}` | Buscar evento por ID | — | ADMIN, LEADER |
-| `PUT` | `/api/events/{id}` | Atualizar evento | `{ title, location, eventDate, status }` | ADMIN, LEADER |
-| `DELETE` | `/api/events/{id}` | Deletar evento (hard delete) | — | ADMIN, LEADER |
+### Eventos (ADMIN, LEADER)
 
----
+| Método | Path | Descrição | Body |
+|---|---|---|---|
+| `POST` | `/api/groups/{groupId}/events` | Criar evento | `{ title, location?, eventDate, status? }` |
+| `GET` | `/api/groups/{groupId}/events` | Listar eventos do grupo | — |
+| `GET` | `/api/events/{id}` | Buscar evento | — |
+| `PUT` | `/api/events/{id}` | Atualizar evento | `{ title, location?, eventDate, status? }` |
+| `DELETE` | `/api/events/{id}` | Hard delete | — |
 
 ### Presença / Check-in
 
 | Método | Path | Descrição | Body | Auth |
 |---|---|---|---|---|
-| `POST` | `/api/events/{eventId}/checkin` | Fazer check-in no evento | `{}` (vazio) | MEMBER |
-| `GET` | `/api/events/{eventId}/presences` | Listar presenças do evento | — | ADMIN, LEADER |
+| `POST` | `/api/events/{eventId}/checkin` | Fazer check-in | `{}` (vazio) | MEMBER |
+| `GET` | `/api/events/{eventId}/presences` | Listar presenças | — | ADMIN, LEADER |
 
 ---
 
-### Mensageria Admin (debug)
+## Interfaces TypeScript
 
-| Método | Path | Descrição | Body | Auth |
-|---|---|---|---|---|
-| `POST` | `/api/admin/messaging/events` | Publicar evento manualmente no RabbitMQ | `{ eventId }` | ADMIN |
+```typescript
+type UserRole = 'ADMIN' | 'LEADER' | 'MEMBER';
+type EventStatus = 'SCHEDULED' | 'OPEN' | 'CLOSED';
+
+// Auth
+interface AuthResponse { accessToken: string }
+interface LoginRequest { email: string; password: string }
+interface RegisterRequest { name: string; email: string; password: string; phone?: string }
+interface ForgotPasswordRequest { email: string }
+interface ResetPasswordRequest { token: string; newPassword: string }
+
+// Church
+interface ChurchResponse { id: number; name: string; active: boolean; createdAt: string }
+
+// Group
+interface GroupResponse {
+  id: number; churchId: number; leaderId: number | null;
+  name: string; description: string | null; active: boolean; createdAt: string;
+}
+
+// User
+interface UserResponse {
+  id: number; groupId: number | null; name: string; email: string;
+  phone: string | null; role: UserRole; active: boolean;
+  createdAt: string; updatedAt: string;
+}
+
+// Event
+interface EventResponse {
+  id: number; groupId: number; title: string; location: string | null;
+  eventDate: string; status: EventStatus; createdAt: string;
+}
+
+// Presence
+interface PresenceResponse {
+  id: number; eventId: number; userId: number; userName: string; checkedInAt: string;
+}
+```
+
+---
+
+## Fluxos de Tela por Role
+
+**ADMIN:** Dashboard completo → CRUD de Churches, Groups, Users, Events, Presence
+
+**LEADER:** Dashboard → Groups que lidera, Events, Presence (apenas dos seus grupos)
+
+**MEMBER:** Dashboard → Ver todos os grupos da igreja (`GET /api/groups/my-church`), trocar de grupo (`PUT /api/groups/{id}/join`), check-in em eventos OPEN do seu grupo
+
+---
+
+## Recuperação de Senha — Fluxo Detalhado
+
+Veja o documento completo em [FEATURE-RECUPERACAO-SENHA.md](./FEATURE-RECUPERACAO-SENHA.md).
+
+**Resumo:**
+1. `POST /api/auth/forgot-password` → envia código de 6 dígitos por e-mail (válido por 15min)
+2. `POST /api/auth/reset-password` → valida código e redefine senha
+3. Redirecionar para `/password-reset-success` → botão "Fazer login"
+
+---
+
+## Configuração do CORS
+
+O backend já permite `http://localhost:4200` em desenvolvimento.
+
+---
+
+## Documentação Interativa (Swagger)
+
+Com o backend rodando:
+
+- **Swagger UI:** `http://localhost:8080/swagger-ui.html`
+- **OpenAPI JSON:** `http://localhost:8080/v3/api-docs`
+
+É possível gerar clients TypeScript automaticamente:
+
+```bash
+npx @openapitools/openapi-generator-cli generate \
+  -i http://localhost:8080/v3/api-docs \
+  -g typescript-angular \
+  -o ./src/app/core/generated
+```
 
 ---
 
 ## O que falta para ser um SaaS sustentável
 
-### 1. Multi-tenancy Real
-
-**Problema:** O modelo atual assume uma única igreja gerenciada por um ADMIN global. Num SaaS, cada igreja é um tenant isolado.
-
-**O que fazer:**
-- Adicionar `tenant_id` em todas as tabelas ou usar schema por tenant
-- Criar entidade `Organization`/`Tenant` que representa a igreja cliente do SaaS
-- Administrador da igreja = `ORG_ADMIN` (diferente de `ADMIN` global da plataforma)
-- Isolar dados: queries sempre filtrar por tenant
-- Subdomínio por igreja (`igreja1.churchtime.com.br`)
-
----
-
-### 2. Sistema de Assinatura / Pagamentos
-
-**Problema:** Não existe nenhum mecanismo de cobrança.
-
-**O que fazer:**
-- Integração com gateway de pagamento (Stripe, Mercado Pago, Asaas)
-- Planos: Gratuito (limitado), Pro, Enterprise
-- Controle de assinatura por tenant (status, data de expiração, plano)
-- Webhooks para pagamento recorrente, falha, cancelamento
-- Bloqueio progressivo de funcionalidades quando assinatura expira
-- Histórico de faturas/invoices
-- Trial period (ex: 14 dias grátis)
-
----
-
-### 3. Frontend
-
-**Problema:** Não existe frontend. CORS está configurado para Angular em localhost:4200, mas nada foi construído.
-
-**O que fazer:**
-- Dashboard web responsivo (Angular, React ou Vue)
-- App mobile (React Native, Flutter) ou PWA
-- Páginas públicas de evento para check-in via QR Code
-- Landing page de marketing + página de preços
-- Portal de autoatendimento da igreja (cadastro sem intervenção manual)
-
----
-
-### 4. Onboarding Self-Service
-
-**Problema:** Igrejas não conseguem se cadastrar sozinhas. Tudo é feito via ADMIN.
-
-**O que fazer:**
-- Fluxo de cadastro completo: criar conta da igreja → configurar dados → convidar membros
-- Wizard de onboarding com passos guiados
-- Importação de membros via CSV/Excel
-- Templates de eventos pré-configurados (culto domingo, ensaio, célula)
-
----
-
-### 5. Autenticação e Segurança
-
-**Problema:** JWT HS256 com secret configurável, sem refresh token, sem 2FA, sem recuperação de senha.
-
-**O que fazer:**
-- Refresh tokens com rotação
-- Recuperação de senha por email (Spring Mail já está como dependência, mas não usado)
-- Verificação de email no registro
-- 2FA (TOTP)
-- Rate limiting nos endpoints de autenticação
-- Audit log (quem fez o quê e quando)
-- Proteção contra brute force (bloqueio após N tentativas)
-- Expirar sessões em mudança de senha
-
----
-
-### 6. Notificações
-
-**Problema:** Existe RabbitMQ para lembretes de eventos, mas não há consumidor real de notificações.
-
-**O que fazer:**
-- Notificações por email (confirmar check-in, lembrete de evento, resumo semanal)
-- Notificações push (se houver app mobile)
-- Notificações por WhatsApp/SMS (integração com Twilio ou similar)
-- Template de emails customizáveis por igreja
-- Preferências de notificação por usuário
-
----
-
-### 7. Relatórios e Analytics
-
-**Problema:** Não há nenhuma funcionalidade de relatórios.
-
-**O que fazer:**
-- Dashboard com métricas: frequência média, tendência, eventos mais frequentados
-- Exportar relatórios em PDF/CSV
-- Gráficos de presença ao longo do tempo
-- Comparativo entre grupos/ministérios
-- Métricas de engajamento por membro
-- Relatório semanal/mensal automático por email para líderes
-
----
-
-### 8. Funcionalidades de Evento
-
-**Problema:** Eventos são básicos (título, local, data, status).
-
-**O que fazer:**
-- Eventos recorrentes (semanal, quinzenal, mensal)
-- Capacidade máxima do evento (limite de vagas)
-- Lista de espera
-- Check-in por QR Code (gerar QR por evento, membro escaneia ou mostra QR pessoal)
-- Check-in tardio com justificativa
-- Categorias de evento (culto, célula, retiro, ensaio)
-- Descrição longa do evento
-- Anexos (arquivos, imagens)
-- Feedback pós-evento (avaliação)
-
----
-
-### 9. Gestão de Membros
-
-**Problema:** Usuários são simples com nome, email, telefone e grupo.
-
-**O que fazer:**
-- Perfil completo do membro (foto, data de nascimento, endereço, data de batismo)
-- Histórico de presença individual
-- Tags/categorias de membros (novo, visitante, regular, líder)
-- Fluxo de visitantes → membro efetivo
-- Aniversariantes da semana
-- Comunicação em massa para segmentos de membros
-
----
-
-### 10. Infraestrutura e DevOps
-
-**Problema:** Só existe docker-compose local, sem pipeline de CI/CD, sem monitoramento.
-
-**O que fazer:**
-- CI/CD (GitHub Actions, GitLab CI)
-- Deploy em cloud (AWS, GCP, Render, Railway)
-- Monitoramento e alertas (Sentry, Datadog, Grafana)
-- Logging estruturado centralizado
-- Health checks e readiness/liveness probes
-- Backup automatizado do banco
-- Variáveis de ambiente por ambiente (.env.example)
-- Documentação de deploy
-- Escalabilidade horizontal (stateless, connection pooling)
-
----
-
-### 11. API e Integrações
-
-**Problema:** API básica sem versionamento, sem documentação OpenAPI, sem webhooks.
-
-**O que fazer:**
-- Versionamento de API (`/api/v1/...`)
-- Documentação OpenAPI/Swagger (springdoc-openapi)
-- Webhooks para integrações externas (ex: notificar sistema da igreja quando alguém faz check-in)
-- API pública com rate limiting e API keys
-- SDK ou bibliotecas cliente
-
----
-
-### 12. Testes
-
-**Problema:** Só existe um teste básico de aplicação (`ChurchBackendApplicationTests`).
-
-**O que fazer:**
-- Testes unitários de services
-- Testes de integração de controllers com MockMvc
-- Testes de segurança (acesso negado para roles erradas)
-- Testes de repositório
-- Testes end-to-end
-- Cobertura mínima de 80%
-
----
-
-### 13. Funcionalidades Administrativas da Plataforma (Super Admin)
-
-**Problema:** Não existe distinção entre admin da plataforma e admin da igreja.
-
-**O que fazer:**
-- Painel Super Admin para gerenciar todas as igrejas clientes
-- Métricas da plataforma (total de igrejas, MRR, churn)
-- Gestão de planos e assinaturas
-- Suporte integrado (tickets)
-- Feature flags para liberar funcionalidades por plano
-
----
-
-### 14. Conformidade Legal (LGPD)
-
-**Problema:** Nenhuma consideração de privacidade.
-
-**O que fazer:**
-- Consentimento explícito no registro
-- Política de privacidade e termos de uso
-- Exportação de dados pessoais do usuário
-- Direito ao esquecimento (deleção completa)
-- Registro de consentimento
-- DPO contact
-
----
-
-### 15. Internacionalização (i18n)
-
-**Problema:** Mensagens de erro e dados em inglês, público-alvo é brasileiro.
-
-**O que fazer:**
-- Suporte a português brasileiro como idioma padrão
-- Mensagens de erro localizadas
-- Formatação de datas, horários e telefones no padrão BR
-- Preparar estrutura para múltiplos idiomas
-
----
-
-## Resumo de Prioridades
+### Roadmap
 
 | Prioridade | Item | Esforço | Impacto |
 |---|---|---|---|
@@ -358,7 +232,7 @@ Church (1) ────< (N) Group (1) ────< (N) User
 | **P0** | Frontend (web + mobile/PWA) | Alto | Crítico |
 | **P0** | Sistema de pagamentos | Médio | Crítico |
 | **P0** | Onboarding self-service | Médio | Crítico |
-| **P1** | Recuperação de senha + verificação email | Baixo | Alto |
+| **P1** | Verificação de email no registro | Baixo | Alto |
 | **P1** | Notificações funcionais (email/push) | Médio | Alto |
 | **P1** | Refresh tokens | Baixo | Alto |
 | **P1** | Eventos recorrentes | Médio | Alto |
@@ -366,22 +240,4 @@ Church (1) ────< (N) Group (1) ────< (N) User
 | **P2** | QR Code check-in | Médio | Médio |
 | **P2** | Testes automatizados | Alto | Médio |
 | **P2** | CI/CD + deploy cloud | Médio | Médio |
-| **P2** | OpenAPI/Swagger | Baixo | Médio |
 | **P2** | LGPD | Médio | Médio |
-| **P3** | Analytics avançado | Alto | Baixo |
-| **P3** | Webhooks e integrações | Médio | Baixo |
-| **P3** | Internacionalização | Baixo | Baixo |
-| **P3** | Super Admin dashboard | Médio | Baixo |
-
----
-
-## Conclusão
-
-O projeto atual é um **MVP funcional** com uma base sólida (Spring Boot, JWT, RabbitMQ, PostgreSQL). Porém, para se tornar um **SaaS sustentável**, precisa de transformações fundamentais:
-
-1. **Arquitetura multi-tenant** — sem isso, não é SaaS
-2. **Monetização** — sem pagamentos, não é sustentável
-3. **Frontend** — sem interface, não é utilizável
-4. **Self-service** — sem onboarding automático, não escala
-
-O backend atual cobre bem o domínio de eventos e presença, mas precisa de ~15 grandes adições para competir no mercado de software para igrejas.

@@ -9,6 +9,8 @@ import com.church.backend.identity.repository.GroupRepository;
 import com.church.backend.identity.repository.UserRepository;
 import com.church.backend.shared.exception.BadRequestException;
 import com.church.backend.shared.exception.NotFoundException;
+import com.church.backend.identity.entity.UserRole;
+import com.church.backend.shared.exception.ForbiddenException;
 import com.church.backend.shared.security.AccessPolicy;
 import com.church.backend.shared.security.CurrentUserService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,36 @@ public class GroupService {
 		return groupRepository.findByChurchIdAndActiveTrueOrderByNameAsc(churchId).stream()
 				.map(GroupService::toResponse)
 				.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<GroupResponse> listMyChurchGroups() {
+		var current = currentUserService.requireCurrent();
+		if (current.getGroup() == null) {
+			throw new BadRequestException("Usuário sem grupo associado");
+		}
+		Long churchId = current.getGroup().getChurch().getId();
+		return groupRepository.findByChurchIdAndActiveTrueOrderByNameAsc(churchId).stream()
+				.map(GroupService::toResponse)
+				.toList();
+	}
+
+	public GroupResponse joinGroup(Long groupId) {
+		var current = currentUserService.requireCurrent();
+		if (current.getRole() != UserRole.MEMBER) {
+			throw new ForbiddenException("Apenas membros podem trocar de grupo");
+		}
+		Group target = requireActiveGroup(groupId);
+		if (current.getGroup() == null) {
+			throw new BadRequestException("Usuário sem grupo associado");
+		}
+		Long currentChurchId = current.getGroup().getChurch().getId();
+		if (!target.getChurch().getId().equals(currentChurchId)) {
+			throw new ForbiddenException("Grupo pertence a outra igreja");
+		}
+		current.setGroup(target);
+		userRepository.save(current);
+		return toResponse(target);
 	}
 
 	@Transactional(readOnly = true)
