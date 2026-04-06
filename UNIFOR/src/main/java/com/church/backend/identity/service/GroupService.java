@@ -109,6 +109,12 @@ public class GroupService {
 		if (!leader.isActive()) {
 			throw new BadRequestException("Usuário inativo");
 		}
+		List<Group> leaderGroups = groupRepository.findByLeaderIdAndActiveTrue(leader.getId());
+		boolean alreadyLeadsAnotherGroup = leaderGroups.stream()
+				.anyMatch(g -> !g.getId().equals(group.getId()));
+		if (alreadyLeadsAnotherGroup) {
+			throw new BadRequestException("Este usuário já é líder de outro grupo");
+		}
 		group.setLeader(leader);
 		return toResponse(groupRepository.save(group));
 	}
