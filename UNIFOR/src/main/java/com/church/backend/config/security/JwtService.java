@@ -20,6 +20,7 @@ public class JwtService {
 
 	private static final String CLAIM_ROLE = "role";
 	private static final String CLAIM_USER_ID = "userId";
+	private static final String CLAIM_NAME = "name";
 	private static final String DEFAULT_ROLE = "MEMBER";
 
 	@Value("${security.jwt.secret-key}")
@@ -73,18 +74,21 @@ public class JwtService {
 		return claimsResolver.apply(claims);
 	}
 
-	public String generateToken(String email, Long userId, String role) {
-		Map<String, Object> claims = buildClaims(userId, role);
+	public String generateToken(String email, Long userId, String role, String name) {
+		Map<String, Object> claims = buildClaims(userId, role, name);
 		return buildToken(claims, email, jwtExpiration);
 	}
 
-	private Map<String, Object> buildClaims(Long userId, String role) {
+	private Map<String, Object> buildClaims(Long userId, String role, String name) {
 		Map<String, Object> claims = new HashMap<>();
 		if (userId != null) {
 			claims.put(CLAIM_USER_ID, userId);
 		}
 		if (role != null && !role.isBlank()) {
 			claims.put(CLAIM_ROLE, role);
+		}
+		if (name != null && !name.isBlank()) {
+			claims.put(CLAIM_NAME, name);
 		}
 		return claims;
 	}

@@ -29,7 +29,7 @@ public class AuthService {
 		String email = request.email();
 		authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, request.password()));
 		var user = userRepository.findByEmailIgnoreCase(email).orElseThrow();
-		return new TokenResponse(jwtService.generateToken(user.getEmail(), user.getId(), user.getRole().name()));
+		return new TokenResponse(jwtService.generateToken(user.getEmail(), user.getId(), user.getRole().name(), user.getName()));
 	}
 
 	@Transactional
@@ -46,6 +46,6 @@ public class AuthService {
 				.role(UserRole.MEMBER)
 				.build();
 		user = userRepository.save(user);
-		return new TokenResponse(jwtService.generateToken(user.getEmail(), user.getId(), user.getRole().name()));
+		return new TokenResponse(jwtService.generateToken(user.getEmail(), user.getId(), user.getRole().name(), user.getName()));
 	}
 }
