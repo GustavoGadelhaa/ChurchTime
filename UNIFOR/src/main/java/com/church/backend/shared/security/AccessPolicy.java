@@ -41,14 +41,15 @@ public class AccessPolicy {
 			}
 			throw new ForbiddenException("Sem acesso a esta igreja");
 		}
-		throw new ForbiddenException("Sem permissão");
+		// Allow any authenticated user (including MEMBER) to list groups for any church
+		return;
 	}
 
 	public void requireGroupRead(Long groupId, User current) {
 		if (current.getRole() == UserRole.ADMIN) {
 			return;
 		}
-		if (current.getRole() == UserRole.LEADER) {
+		if (current.getRole() == UserRole.LEADER || current.getRole() == UserRole.MEMBER) {
 			Group g = groupRepository.findById(groupId).orElseThrow(() -> new NotFoundException("Grupo não encontrado"));
 			if (!g.isActive()) {
 				throw new NotFoundException("Grupo não encontrado");
@@ -57,6 +58,11 @@ public class AccessPolicy {
 				return;
 			}
 			if (current.getGroup() != null && current.getGroup().getId().equals(groupId)) {
+				return;
+			}
+			// MEMBER can read any group in their church
+			if (current.getGroup() != null && current.getGroup().getChurch() != null
+					&& g.getChurch() != null && g.getChurch().getId().equals(current.getGroup().getChurch().getId())) {
 				return;
 			}
 			throw new ForbiddenException("Sem acesso ao grupo");
@@ -102,6 +108,29 @@ public class AccessPolicy {
 		requireGroupRead(event.getGroup().getId(), current);
 	}
 
+	public void requireEventAccessForCheckin(Event event, User current) {
+		if (current.getRole() == UserRole.ADMIN) {
+			return;
+		}
+		if (current.getRole() == UserRole.LEADER) {
+			Group g = event.getGroup();
+			if (g.getLeader() != null && g.getLeader().getId().equals(current.getId())) {
+				return;
+			}
+			if (current.getGroup() != null && current.getGroup().getId().equals(g.getId())) {
+				return;
+			}
+			throw new ForbiddenException("Sem acesso ao evento");
+		}
+		if (current.getRole() == UserRole.MEMBER) {
+			if (current.getGroup() != null && current.getGroup().getId().equals(event.getGroup().getId())) {
+				return;
+			}
+			throw new ForbiddenException("Apenas membros do grupo podem acessar este evento");
+		}
+		throw new ForbiddenException("Sem permissão");
+	}
+
 	public void requirePresencesRead(Event event, User current) {
 		if (current.getRole() == UserRole.ADMIN) {
 			return;
@@ -111,7 +140,16 @@ public class AccessPolicy {
 			if (g.getLeader() != null && g.getLeader().getId().equals(current.getId())) {
 				return;
 			}
-			throw new ForbiddenException("Apenas líder do grupo ou administrador");
+			if (current.getGroup() != null && current.getGroup().getId().equals(g.getId())) {
+				return;
+			}
+			throw new ForbiddenException("Sem acesso às presenças");
+		}
+		if (current.getRole() == UserRole.MEMBER) {
+			if (current.getGroup() != null && current.getGroup().getId().equals(event.getGroup().getId())) {
+				return;
+			}
+			throw new ForbiddenException("Apenas membros do grupo podem ver presenças");
 		}
 		throw new ForbiddenException("Sem permissão");
 	}

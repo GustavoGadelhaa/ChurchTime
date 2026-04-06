@@ -23,4 +23,16 @@ public interface UserRepository extends JpaRepository<User, Long> {
 	List<User> findByGroupIdAndActiveTrueOrderByNameAsc(Long groupId);
 
 	List<User> findByActiveTrueOrderByNameAsc();
+
+	@Query("SELECT COUNT(u) FROM User u WHERE u.group.church.id = :churchId AND u.active = true")
+	int countByChurchIdAndActiveTrue(@Param("churchId") Long churchId);
+
+	@Query("SELECT COUNT(u) FROM User u WHERE u.group.id = :groupId AND u.active = true")
+	int countByGroupIdAndActiveTrue(@Param("groupId") Long groupId);
+
+	@Query("SELECT u.group.church.id FROM User u WHERE u.id = :userId AND u.group IS NOT NULL AND u.group.church IS NOT NULL")
+	Long findUserChurchId(@Param("userId") Long userId);
+
+	@Query("SELECT c.id FROM Church c WHERE c.active = true ORDER BY c.id LIMIT 1")
+	Long findFirstActiveChurchId();
 }

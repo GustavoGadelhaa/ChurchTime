@@ -35,4 +35,15 @@ public final class GroupDtos {
 
 	public record AssignLeaderRequest(Long leaderUserId) {
 	}
+
+	public record MyGroupResponse(
+			Long id,
+			String name,
+			String description,
+			String leaderName,
+			long memberCount,
+			long activeEvents,
+			boolean active
+	) {
+	}
 }

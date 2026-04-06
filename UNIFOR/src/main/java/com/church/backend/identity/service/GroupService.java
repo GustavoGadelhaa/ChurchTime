@@ -44,7 +44,7 @@ public class GroupService {
 	public List<GroupResponse> listMyChurchGroups() {
 		var current = currentUserService.requireCurrent();
 		if (current.getGroup() == null) {
-			throw new BadRequestException("Usuário sem grupo associado");
+			return List.of();
 		}
 		Long churchId = current.getGroup().getChurch().getId();
 		return groupRepository.findByChurchIdAndActiveTrueOrderByNameAsc(churchId).stream()

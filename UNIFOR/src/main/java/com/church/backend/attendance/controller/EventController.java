@@ -36,7 +36,7 @@ public class EventController {
 	}
 
 	@GetMapping("/api/groups/{groupId}/events")
-	@Operation(summary = "Listar eventos do grupo", description = "Lista todos os eventos de um grupo. Requer ADMIN ou LEADER.")
+	@Operation(summary = "Listar eventos do grupo", description = "Lista todos os eventos de um grupo. ADMIN, LEADER ou MEMBER podem acessar.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Lista de eventos retornada"),
 			@ApiResponse(responseCode = "404", description = "Grupo não encontrado"),
@@ -47,14 +47,14 @@ public class EventController {
 	}
 
 	@GetMapping("/api/events/{id}")
-	@Operation(summary = "Buscar evento por ID", description = "Retorna um evento pelo ID. Requer ADMIN ou LEADER.")
+	@Operation(summary = "Buscar evento por ID", description = "Retorna um evento pelo ID. ADMIN, LEADER ou MEMBER do grupo podem acessar.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Evento encontrado"),
 			@ApiResponse(responseCode = "404", description = "Evento não encontrado"),
 			@ApiResponse(responseCode = "403", description = "Sem permissão")
 	})
 	public EventResponse get(@PathVariable Long id) {
-		return eventService.get(id);
+		return eventService.getForCheckin(id);
 	}
 
 	@PutMapping("/api/events/{id}")

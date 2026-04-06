@@ -6,6 +6,7 @@ import com.church.backend.attendance.dto.EventDtos.UpdateEventRequest;
 import com.church.backend.attendance.entity.Event;
 import com.church.backend.attendance.entity.EventStatus;
 import com.church.backend.attendance.repository.EventRepository;
+import com.church.backend.identity.entity.UserRole;
 import com.church.backend.identity.service.GroupService;
 import com.church.backend.shared.exception.NotFoundException;
 import com.church.backend.shared.security.AccessPolicy;
@@ -40,6 +41,19 @@ public class EventService {
 	public EventResponse get(Long id) {
 		var current = currentUserService.requireCurrent();
 		Event event = requireWithGroup(id);
+		accessPolicy.requireEventAccess(event, current);
+		return toResponse(event);
+	}
+
+	@Transactional(readOnly = true)
+	public EventResponse getForCheckin(Long id) {
+		var current = currentUserService.requireCurrent();
+		Event event = requireWithGroup(id);
+		// MEMBER can access events for checkin
+		if (current.getRole() == UserRole.MEMBER && current.getGroup() != null
+				&& current.getGroup().getId().equals(event.getGroup().getId())) {
+			return toResponse(event);
+		}
 		accessPolicy.requireEventAccess(event, current);
 		return toResponse(event);
 	}

@@ -37,17 +37,17 @@ public class GroupController {
 	}
 
 	@GetMapping("/api/churches/{churchId}/groups")
-	@Operation(summary = "Listar grupos da igreja", description = "Lista todos os grupos ativos de uma igreja. Requer ADMIN ou LEADER.")
+	@Operation(summary = "Listar grupos da igreja", description = "Lista todos os grupos ativos de uma igreja. Acessível para usuários autenticados.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Lista de grupos retornada"),
 			@ApiResponse(responseCode = "404", description = "Igreja não encontrada"),
-			@ApiResponse(responseCode = "403", description = "Sem permissão")
+			@ApiResponse(responseCode = "401", description = "Não autenticado")
 	})
 	public List<GroupResponse> listByChurch(@PathVariable Long churchId) {
 		return groupService.listByChurch(churchId);
 	}
 
-	@GetMapping("/api/groups/my-church")
+	@GetMapping("/api/groups")
 	@Operation(summary = "Listar grupos da minha igreja", description = "Lista todos os grupos ativos da igreja do usuário autenticado. Qualquer role autenticada pode acessar.")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Lista de grupos retornada"),
@@ -55,6 +55,17 @@ public class GroupController {
 			@ApiResponse(responseCode = "401", description = "Não autenticado")
 	})
 	public List<GroupResponse> listMyChurchGroups() {
+		return groupService.listMyChurchGroups();
+	}
+
+	@GetMapping("/api/groups/my-church")
+	@Operation(summary = "Listar grupos da minha igreja (alias)", description = "Alias para GET /api/groups. Lista todos os grupos ativos da igreja do usuário autenticado.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Lista de grupos retornada"),
+			@ApiResponse(responseCode = "400", description = "Usuário sem grupo associado"),
+			@ApiResponse(responseCode = "401", description = "Não autenticado")
+	})
+	public List<GroupResponse> listMyChurchGroupsAlias() {
 		return groupService.listMyChurchGroups();
 	}
 
