@@ -168,4 +168,18 @@ public class AccessPolicy {
 			throw new BadRequestException("Evento não está aberto para check-in");
 		}
 	}
+
+	public void requireGroupMembershipManagement(Long groupId, User current) {
+		if (current.getRole() == UserRole.ADMIN) {
+			return;
+		}
+		if (current.getRole() == UserRole.LEADER) {
+			Group g = groupRepository.findById(groupId).orElseThrow(() -> new NotFoundException("Grupo não encontrado"));
+			if (g.getLeader() != null && g.getLeader().getId().equals(current.getId())) {
+				return;
+			}
+			throw new ForbiddenException("Sem permissão para gerenciar membros deste grupo");
+		}
+		throw new ForbiddenException("Apenas administrador ou líder do grupo podem gerenciar membros");
+	}
 }

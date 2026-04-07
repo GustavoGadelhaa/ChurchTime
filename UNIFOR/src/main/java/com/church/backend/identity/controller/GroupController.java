@@ -127,4 +127,30 @@ public class GroupController {
 	public void delete(@PathVariable Long id) {
 		groupService.delete(id);
 	}
+
+	@DeleteMapping("/api/groups/{groupId}/users/{userId}")
+	@Operation(summary = "Remover usuário do grupo", description = "Remove o vínculo de um usuário com o grupo (seta group_id = NULL). Requer ADMIN ou LEADER do grupo.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Usuário removido do grupo com sucesso"),
+			@ApiResponse(responseCode = "403", description = "Sem permissão para remover deste grupo"),
+			@ApiResponse(responseCode = "404", description = "Grupo ou usuário não encontrado"),
+			@ApiResponse(responseCode = "409", description = "Usuário não pertence a este grupo")
+	})
+	public java.util.Map<String, String> removeUserFromGroup(@PathVariable Long groupId, @PathVariable Long userId) {
+		String message = groupService.removeUserFromGroup(groupId, userId);
+		return java.util.Map.of("message", message);
+	}
+
+	@PostMapping("/api/groups/{groupId}/users/{userId}")
+	@Operation(summary = "Adicionar usuário ao grupo", description = "Adiciona um usuário existente a um grupo. Requer ADMIN ou LEADER do grupo.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Usuário adicionado ao grupo com sucesso"),
+			@ApiResponse(responseCode = "403", description = "Sem permissão"),
+			@ApiResponse(responseCode = "404", description = "Grupo ou usuário não encontrado"),
+			@ApiResponse(responseCode = "409", description = "Usuário já pertence a este grupo")
+	})
+	public java.util.Map<String, String> addUserToGroup(@PathVariable Long groupId, @PathVariable Long userId) {
+		String message = groupService.addUserToGroup(groupId, userId);
+		return java.util.Map.of("message", message);
+	}
 }

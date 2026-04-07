@@ -101,11 +101,20 @@ Church (1) ────< (N) Group (1) ────< (N) User
 | `PUT` | `/api/groups/{id}/leader` | ADMIN | Atribuir/remover líder | `{ leaderUserId }` (null remove) | 200 |
 | `PUT` | `/api/groups/{id}/join` | MEMBER | Trocar de grupo (mesma igreja) | — | 200 |
 | `DELETE` | `/api/groups/{id}` | ADMIN | Soft delete | — | 204 |
+| `DELETE` | `/api/groups/{groupId}/users/{userId}` | ADMIN, LEADER | Remover usuário do grupo (desvincula, não deleta) | — | 200 |
+| `POST` | `/api/groups/{groupId}/users/{userId}` | ADMIN, LEADER | Adicionar usuário existente ao grupo | — | 200 |
 
 **Regras do join:**
 - Apenas role `MEMBER`
 - Membro já precisa ter um grupo associado
 - Grupo de destino deve estar ativo e pertencer à mesma igreja
+
+**Regras de gerenciamento de membros (adicionar/remover):**
+- `ADMIN` pode gerenciar qualquer grupo
+- `LEADER` só pode gerenciar grupos que lidera (`group.leader_id == authenticatedUserId`)
+- `MEMBER` não pode gerenciar membros
+- Não é possível remover o líder do grupo (use `PUT /api/groups/{id}/leader` primeiro)
+- Usuário adicionado deve pertencer à mesma igreja do grupo
 
 ### Usuários
 
@@ -193,6 +202,11 @@ interface EventResponse {
 // Presence
 interface PresenceResponse {
   id: number; userId: number; userName: string; checkedInAt: string;
+}
+
+// Group membership management
+interface MessageResponse {
+  message: string;
 }
 ```
 

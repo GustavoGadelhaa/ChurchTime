@@ -5,11 +5,13 @@ import com.church.backend.identity.dto.GroupDtos.CreateGroupRequest;
 import com.church.backend.identity.dto.GroupDtos.GroupResponse;
 import com.church.backend.identity.dto.GroupDtos.UpdateGroupRequest;
 import com.church.backend.identity.entity.Group;
+import com.church.backend.identity.entity.User;
 import com.church.backend.identity.repository.GroupRepository;
 import com.church.backend.identity.repository.UserRepository;
 import com.church.backend.shared.exception.BadRequestException;
 import com.church.backend.shared.exception.NotFoundException;
 import com.church.backend.identity.entity.UserRole;
+import com.church.backend.shared.exception.ConflictException;
 import com.church.backend.shared.exception.ForbiddenException;
 import com.church.backend.shared.security.AccessPolicy;
 import com.church.backend.shared.security.CurrentUserService;
@@ -126,6 +128,44 @@ public class GroupService {
 			return;
 		}
 		group.setActive(false);
+	}
+
+	public String removeUserFromGroup(Long groupId, Long userId) {
+		var current = currentUserService.requireCurrent();
+		accessPolicy.requireGroupMembershipManagement(groupId, current);
+		Group group = requireActiveGroup(groupId);
+		User target = userRepository.findById(userId)
+				.orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
+		if (target.getGroup() == null || !target.getGroup().getId().equals(groupId)) {
+			throw new ConflictException("Usuário não pertence a este grupo");
+		}
+		if (group.getLeader() != null && group.getLeader().getId().equals(target.getId())) {
+			throw new com.church.backend.shared.exception.BadRequestException(
+					"Não é possível remover o líder do grupo. Altere o líder primeiro via PUT /api/groups/{id}/leader");
+		}
+		target.setGroup(null);
+		userRepository.save(target);
+		return "Usuário removido do grupo com sucesso.";
+	}
+
+	public String addUserToGroup(Long groupId, Long userId) {
+		var current = currentUserService.requireCurrent();
+		accessPolicy.requireGroupMembershipManagement(groupId, current);
+		Group group = requireActiveGroup(groupId);
+		User target = userRepository.findById(userId)
+				.orElseThrow(() -> new NotFoundException("Usuário não encontrado"));
+		if (!target.isActive()) {
+			throw new BadRequestException("Usuário inativo");
+		}
+		if (target.getGroup() != null && target.getGroup().getId().equals(groupId)) {
+			throw new ConflictException("Usuário já pertence a este grupo");
+		}
+		if (target.getGroup() != null && !target.getGroup().getChurch().getId().equals(group.getChurch().getId())) {
+			throw new ForbiddenException("Usuário pertence a uma igreja diferente");
+		}
+		target.setGroup(group);
+		userRepository.save(target);
+		return "Usuário adicionado ao grupo com sucesso.";
 	}
 
 	public Group requireActiveGroup(Long id) {
