@@ -28,45 +28,38 @@ public class AuthController {
 
 	@PostMapping("/login")
 	public TokenResponse login(@RequestBody @Valid LoginRequest request) {
-		log.info("[AUTH] POST /api/auth/login - Email: {}, Timestamp: {}", 
-				maskEmail(request.getEmail()), java.time.LocalDateTime.now());
+		log.info("[AUTH] POST /api/auth/login - Email: {} - Timestamp: {}", 
+				request.getEmail(), java.time.LocalDateTime.now());
 		TokenResponse response = authService.login(request);
-		log.info("[AUTH] POST /api/auth/login - SUCCESS - UserId: {}, Timestamp: {}", 
-				response.getAccessToken() != null ? "authenticated" : "failed", java.time.LocalDateTime.now());
+		log.info("[AUTH] POST /api/auth/login - SUCCESS - Email: {} - Timestamp: {}", 
+				request.getEmail(), java.time.LocalDateTime.now());
 		return response;
 	}
 
 	@PostMapping("/register")
 	@ResponseStatus(HttpStatus.CREATED)
 	public TokenResponse register(@RequestBody @Valid RegisterRequest request) {
-		log.info("[AUTH] POST /api/auth/register - Name: {}, Email: {}, Timestamp: {}", 
-				request.getName(), maskEmail(request.getEmail()), java.time.LocalDateTime.now());
+		log.info("[AUTH] POST /api/auth/register - Name: {}, Email: {} - Timestamp: {}", 
+				request.getName(), request.getEmail(), java.time.LocalDateTime.now());
 		TokenResponse response = authService.register(request);
-		log.info("[AUTH] POST /api/auth/register - CREATED - Email: {}, Timestamp: {}", 
-				maskEmail(request.getEmail()), java.time.LocalDateTime.now());
+		log.info("[AUTH] POST /api/auth/register - CREATED - Email: {} - Timestamp: {}", 
+				request.getEmail(), java.time.LocalDateTime.now());
 		return response;
 	}
 
 	@PostMapping("/forgot-password")
 	public void forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
-		log.info("[AUTH] POST /api/auth/forgot-password - Email: {}, Timestamp: {}", 
-				maskEmail(request.getEmail()), java.time.LocalDateTime.now());
+		log.info("[AUTH] POST /api/auth/forgot-password - Email: {} - Timestamp: {}", 
+				request.getEmail(), java.time.LocalDateTime.now());
 		passwordResetService.requestReset(request);
-		log.info("[AUTH] POST /api/auth/forgot-password - SUCCESS - Email: {}, Timestamp: {}", 
-				maskEmail(request.getEmail()), java.time.LocalDateTime.now());
+		log.info("[AUTH] POST /api/auth/forgot-password - SENT - Email: {} - Timestamp: {}", 
+				request.getEmail(), java.time.LocalDateTime.now());
 	}
 
 	@PostMapping("/reset-password")
 	public void resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
-		log.info("[AUTH] POST /api/auth/reset-password - Token received, Timestamp: {}", java.time.LocalDateTime.now());
+		log.info("[AUTH] POST /api/auth/reset-password - Token received - Timestamp: {}", java.time.LocalDateTime.now());
 		passwordResetService.resetPassword(request);
 		log.info("[AUTH] POST /api/auth/reset-password - SUCCESS - Timestamp: {}", java.time.LocalDateTime.now());
-	}
-
-	private String maskEmail(String email) {
-		if (email == null) return "null";
-		int atIndex = email.indexOf('@');
-		if (atIndex <= 1) return "***@***";
-		return email.substring(0, 1) + "***" + email.substring(atIndex);
 	}
 }
