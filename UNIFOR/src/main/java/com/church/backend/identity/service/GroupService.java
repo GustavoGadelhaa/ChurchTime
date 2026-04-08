@@ -5,7 +5,9 @@ import com.church.backend.identity.dto.GroupDtos.CreateGroupRequest;
 import com.church.backend.identity.dto.GroupDtos.GroupResponse;
 import com.church.backend.identity.dto.GroupDtos.UpdateGroupRequest;
 import com.church.backend.identity.entity.Group;
+import com.church.backend.identity.entity.GroupLeader;
 import com.church.backend.identity.entity.User;
+import com.church.backend.identity.repository.GroupLeaderRepository;
 import com.church.backend.identity.repository.GroupRepository;
 import com.church.backend.identity.repository.UserRepository;
 import com.church.backend.shared.exception.BadRequestException;
@@ -27,6 +29,7 @@ import java.util.List;
 public class GroupService {
 
 	private final GroupRepository groupRepository;
+	private final GroupLeaderRepository groupLeaderRepository;
 	private final UserRepository userRepository;
 	private final ChurchService churchService;
 	private final CurrentUserService currentUserService;
@@ -103,6 +106,9 @@ public class GroupService {
 		accessPolicy.requireAdmin(currentUserService.requireCurrent());
 		Group group = requireActiveGroup(id);
 		if (request.leaderUserId() == null) {
+			if (group.getLeader() != null) {
+				groupLeaderRepository.deleteByUserIdAndGroupId(group.getLeader().getId(), group.getId());
+			}
 			group.setLeader(null);
 			return toResponse(groupRepository.save(group));
 		}
@@ -118,7 +124,18 @@ public class GroupService {
 			throw new BadRequestException("Este usuário já é líder de outro grupo");
 		}
 		group.setLeader(leader);
-		return toResponse(groupRepository.save(group));
+		Group savedGroup = groupRepository.save(group);
+
+		if (!groupLeaderRepository.existsByUserIdAndGroupId(leader.getId(), group.getId())) {
+			GroupLeader groupLeader = GroupLeader.builder()
+					.church(group.getChurch())
+					.user(leader)
+					.group(group)
+					.build();
+			groupLeaderRepository.save(groupLeader);
+		}
+
+		return toResponse(savedGroup);
 	}
 
 	public void delete(Long id) {
