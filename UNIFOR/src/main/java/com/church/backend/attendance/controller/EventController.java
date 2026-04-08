@@ -6,6 +6,7 @@ import com.church.backend.attendance.dto.EventDtos.UpdateEventRequest;
 import com.church.backend.attendance.service.EventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class EventController {
 
 	private final EventService eventService;
@@ -20,7 +22,12 @@ public class EventController {
 	@PostMapping("/api/groups/{groupId}/events")
 	@ResponseStatus(HttpStatus.CREATED)
 	public EventResponse create(@PathVariable Long groupId, @RequestBody @Valid CreateEventRequest request) {
-		return eventService.create(groupId, request);
+		log.info("[EVENT] POST /api/groups/{}/events - Title: {}, Timestamp: {}", 
+				groupId, request.getTitle(), java.time.LocalDateTime.now());
+		EventResponse response = eventService.create(groupId, request);
+		log.info("[EVENT] POST /api/groups/{}/events - CREATED - EventId: {}, Timestamp: {}", 
+				groupId, response.getId(), java.time.LocalDateTime.now());
+		return response;
 	}
 
 	@GetMapping("/api/groups/{groupId}/events")

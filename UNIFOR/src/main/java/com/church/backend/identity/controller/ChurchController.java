@@ -6,6 +6,7 @@ import com.church.backend.identity.dto.ChurchDtos.UpdateChurchRequest;
 import com.church.backend.identity.service.ChurchService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/churches")
 @RequiredArgsConstructor
+@Slf4j
 public class ChurchController {
 
 	private final ChurchService churchService;
@@ -21,7 +23,12 @@ public class ChurchController {
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public ChurchResponse create(@RequestBody @Valid CreateChurchRequest request) {
-		return churchService.create(request);
+		log.info("[CHURCH] POST /api/churches - Name: {}, Timestamp: {}", 
+				request.getName(), java.time.LocalDateTime.now());
+		ChurchResponse response = churchService.create(request);
+		log.info("[CHURCH] POST /api/churches - CREATED - ChurchId: {}, Timestamp: {}", 
+				response.getId(), java.time.LocalDateTime.now());
+		return response;
 	}
 
 	@GetMapping

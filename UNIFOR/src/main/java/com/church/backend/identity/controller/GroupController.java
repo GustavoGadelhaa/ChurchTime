@@ -7,6 +7,7 @@ import com.church.backend.identity.dto.GroupDtos.UpdateGroupRequest;
 import com.church.backend.identity.service.GroupService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class GroupController {
 
 	private final GroupService groupService;
@@ -21,7 +23,12 @@ public class GroupController {
 	@PostMapping("/api/churches/{churchId}/groups")
 	@ResponseStatus(HttpStatus.CREATED)
 	public GroupResponse create(@PathVariable Long churchId, @RequestBody @Valid CreateGroupRequest request) {
-		return groupService.create(churchId, request);
+		log.info("[GROUP] POST /api/churches/{}/groups - Name: {}, Timestamp: {}", 
+				churchId, request.getName(), java.time.LocalDateTime.now());
+		GroupResponse response = groupService.create(churchId, request);
+		log.info("[GROUP] POST /api/churches/{}/groups - CREATED - GroupId: {}, Timestamp: {}", 
+				churchId, response.getId(), java.time.LocalDateTime.now());
+		return response;
 	}
 
 	@GetMapping("/api/churches/{churchId}/groups")
@@ -73,7 +80,11 @@ public class GroupController {
 
 	@PostMapping("/api/groups/{groupId}/users/{userId}")
 	public java.util.Map<String, String> addUserToGroup(@PathVariable Long groupId, @PathVariable Long userId) {
+		log.info("[GROUP] POST /api/groups/{}/users/{} - Timestamp: {}", 
+				groupId, userId, java.time.LocalDateTime.now());
 		String message = groupService.addUserToGroup(groupId, userId);
+		log.info("[GROUP] POST /api/groups/{}/users/{} - SUCCESS - Timestamp: {}", 
+				groupId, userId, java.time.LocalDateTime.now());
 		return java.util.Map.of("message", message);
 	}
 }
