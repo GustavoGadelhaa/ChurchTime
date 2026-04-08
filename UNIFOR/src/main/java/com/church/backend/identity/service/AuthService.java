@@ -26,23 +26,23 @@ public class AuthService {
 
 	@Transactional(readOnly = true)
 	public TokenResponse login(LoginRequest request) {
-		String email = request.email();
-		authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, request.password()));
+		String email = request.getEmail();
+		authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, request.getPassword()));
 		var user = userRepository.findByEmailIgnoreCase(email).orElseThrow();
 		return new TokenResponse(jwtService.generateToken(user.getEmail(), user.getId(), user.getRole().name(), user.getName()));
 	}
 
 	@Transactional
 	public TokenResponse register(RegisterRequest request) {
-		String email = request.email();
+		String email = request.getEmail();
 		if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
 			throw new BadRequestException("E-mail já cadastrado");
 		}
 		User user = User.builder()
-				.name(request.name())
+				.name(request.getName())
 				.email(email)
-				.passwordHash(passwordEncoder.encode(request.password()))
-				.phone(request.phone())
+				.passwordHash(passwordEncoder.encode(request.getPassword()))
+				.phone(request.getPhone())
 				.role(UserRole.MEMBER)
 				.build();
 		user = userRepository.save(user);

@@ -4,6 +4,8 @@ import com.church.backend.identity.dto.AuthDtos.ForgotPasswordRequest;
 import com.church.backend.identity.dto.AuthDtos.ResetPasswordRequest;
 import com.church.backend.identity.service.PasswordResetService;
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -36,7 +38,7 @@ public class PageController {
 									   BindingResult bindingResult,
 									   Model model) {
 		if (bindingResult.hasErrors()) {
-			model.addAttribute("email", request.email());
+			model.addAttribute("email", request.getEmail());
 			model.addAttribute("error", bindingResult.getFieldError().getDefaultMessage());
 			return "forgot-password";
 		}
@@ -44,10 +46,10 @@ public class PageController {
 		try {
 			passwordResetService.requestReset(request);
 			model.addAttribute("success", "Código enviado! Verifique seu e-mail.");
-			model.addAttribute("email", request.email());
+			model.addAttribute("email", request.getEmail());
 		} catch (Exception e) {
 			model.addAttribute("error", "Erro ao enviar. Tente novamente.");
-			model.addAttribute("email", request.email());
+			model.addAttribute("email", request.getEmail());
 		}
 
 		return "forgot-password";
@@ -66,29 +68,29 @@ public class PageController {
 	public String resetPasswordSubmit(@ModelAttribute ResetPasswordForm form,
 									  BindingResult bindingResult,
 									  Model model) {
-		if (!form.newPassword().equals(form.confirmPassword())) {
+		if (!form.getNewPassword().equals(form.getConfirmPassword())) {
 			model.addAttribute("error", "As senhas não coincidem.");
-			model.addAttribute("token", form.token());
-			model.addAttribute("newPassword", form.newPassword());
-			model.addAttribute("confirmPassword", form.confirmPassword());
+			model.addAttribute("token", form.getToken());
+			model.addAttribute("newPassword", form.getNewPassword());
+			model.addAttribute("confirmPassword", form.getConfirmPassword());
 			return "reset-password";
 		}
 
-		if (form.newPassword().length() < 6) {
+		if (form.getNewPassword().length() < 6) {
 			model.addAttribute("error", "A senha deve ter pelo menos 6 caracteres.");
-			model.addAttribute("token", form.token());
-			model.addAttribute("newPassword", form.newPassword());
-			model.addAttribute("confirmPassword", form.confirmPassword());
+			model.addAttribute("token", form.getToken());
+			model.addAttribute("newPassword", form.getNewPassword());
+			model.addAttribute("confirmPassword", form.getConfirmPassword());
 			return "reset-password";
 		}
 
 		try {
-			ResetPasswordRequest request = new ResetPasswordRequest(form.token(), form.newPassword());
+			ResetPasswordRequest request = new ResetPasswordRequest(form.getToken(), form.getNewPassword());
 			passwordResetService.resetPassword(request);
 			return "redirect:/password-reset-success";
 		} catch (Exception e) {
 			model.addAttribute("error", e.getMessage() != null ? e.getMessage() : "Código inválido ou expirado.");
-			model.addAttribute("token", form.token());
+			model.addAttribute("token", form.getToken());
 			model.addAttribute("newPassword", "");
 			model.addAttribute("confirmPassword", "");
 			return "reset-password";
@@ -100,6 +102,11 @@ public class PageController {
 		return "success";
 	}
 
-	public record ResetPasswordForm(String token, String newPassword, String confirmPassword) {
+	@Data
+	@AllArgsConstructor
+	public static class ResetPasswordForm {
+		private String token;
+		private String newPassword;
+		private String confirmPassword;
 	}
 }

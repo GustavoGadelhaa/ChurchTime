@@ -62,12 +62,12 @@ public class EventService {
 		var current = currentUserService.requireCurrent();
 		accessPolicy.requireLeaderOrAdminForGroup(groupId, current);
 		var group = groupService.requireActiveGroup(groupId);
-		EventStatus status = request.status() != null ? request.status() : EventStatus.SCHEDULED;
+		EventStatus status = request.getStatus() != null ? request.getStatus() : EventStatus.SCHEDULED;
 		Event event = Event.builder()
 				.group(group)
-				.title(request.title().trim())
-				.location(trimToNull(request.location()))
-				.eventDate(request.eventDate())
+				.title(request.getTitle().trim())
+				.location(trimToNull(request.getLocation()))
+				.eventDate(request.getEventDate())
 				.status(status)
 				.build();
 		return toResponse(eventRepository.save(event));
@@ -77,10 +77,10 @@ public class EventService {
 		var current = currentUserService.requireCurrent();
 		Event event = requireWithGroup(id);
 		accessPolicy.requireLeaderOrAdminForGroup(event.getGroup().getId(), current);
-		event.setTitle(request.title().trim());
-		event.setLocation(trimToNull(request.location()));
-		event.setEventDate(request.eventDate());
-		event.setStatus(request.status());
+		event.setTitle(request.getTitle().trim());
+		event.setLocation(trimToNull(request.getLocation()));
+		event.setEventDate(request.getEventDate());
+		event.setStatus(request.getStatus());
 		return toResponse(eventRepository.save(event));
 	}
 

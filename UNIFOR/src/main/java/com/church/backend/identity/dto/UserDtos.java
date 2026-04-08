@@ -5,6 +5,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 import java.time.Instant;
 
@@ -13,37 +16,67 @@ public final class UserDtos {
 	private UserDtos() {
 	}
 
-	public record UserResponse(
-			Long id,
-			Long groupId,
-			String name,
-			String email,
-			String phone,
-			UserRole role,
-			boolean active,
-			Instant createdAt,
-			Instant updatedAt
-	) {
+	@Data
+	@AllArgsConstructor
+	public static class UserResponse {
+		private Long id;
+		private Long groupId;
+		private String name;
+		private String email;
+		private String phone;
+		private UserRole role;
+		private boolean active;
+		private Instant createdAt;
+		private Instant updatedAt;
 	}
 
-	public record CreateUserRequest(
-			@NotBlank @Size(max = 100) String name,
-			@NotBlank @Email @Size(max = 150) String email,
-			@NotBlank @Size(min = 6, max = 100) String password,
-			@Size(max = 20) String phone,
-			Long groupId
-	) {
+	@Data
+	@AllArgsConstructor
+	public static class CreateUserRequest {
+		@NotBlank
+		@Size(max = 100)
+		private String name;
+
+		@NotBlank
+		@Email
+		@Size(max = 150)
+		private String email;
+
+		@NotBlank
+		@Size(min = 6, max = 100)
+		private String password;
+
+		@Size(max = 20)
+		private String phone;
+
+		private Long groupId;
 	}
 
-	public record UpdateUserRequest(
-			@NotBlank @Size(max = 100) String name,
-			@NotBlank @Email @Size(max = 150) String email,
-			@Size(max = 20) String phone,
-			@NotNull UserRole role,
-			String password
-	) {
+	@Data
+	@AllArgsConstructor
+	public static class UpdateUserRequest {
+		@NotBlank
+		@Size(max = 100)
+		private String name;
+
+		@NotBlank
+		@Email
+		@Size(max = 150)
+		private String email;
+
+		@Size(max = 20)
+		private String phone;
+
+		@NotNull
+		private UserRole role;
+
+		private String password;
 	}
 
-	public record AssignUserGroupRequest(@NotNull Long groupId) {
+	@Data
+	@AllArgsConstructor
+	public static class AssignUserGroupRequest {
+		@NotNull
+		private Long groupId;
 	}
 }

@@ -53,19 +53,19 @@ public class UserService {
 
 	public UserResponse create(CreateUserRequest request) {
 		accessPolicy.requireAdmin(currentUserService.requireCurrent());
-		String email = request.email().trim().toLowerCase();
+		String email = request.getEmail().trim().toLowerCase();
 		if (userRepository.findByEmailIgnoreCase(email).isPresent()) {
 			throw new BadRequestException("E-mail já cadastrado");
 		}
 		User user = User.builder()
-				.name(request.name().trim())
+				.name(request.getName().trim())
 				.email(email)
-				.passwordHash(passwordEncoder.encode(request.password()))
-				.phone(trimToNull(request.phone()))
+				.passwordHash(passwordEncoder.encode(request.getPassword()))
+				.phone(trimToNull(request.getPhone()))
 				.role(UserRole.MEMBER)
 				.build();
-		if (request.groupId() != null) {
-			var group = groupService.requireActiveGroup(request.groupId());
+		if (request.getGroupId() != null) {
+			var group = groupService.requireActiveGroup(request.getGroupId());
 			user.setGroup(group);
 		}
 		return toResponse(userRepository.save(user));
@@ -74,24 +74,24 @@ public class UserService {
 	public UserResponse update(Long id, UpdateUserRequest request) {
 		accessPolicy.requireAdmin(currentUserService.requireCurrent());
 		User user = requireActiveUser(id);
-		String email = request.email().trim().toLowerCase();
+		String email = request.getEmail().trim().toLowerCase();
 		userRepository.findByEmailIgnoreCase(email).ifPresent(other -> {
 			if (!other.getId().equals(user.getId())) {
 				throw new BadRequestException("E-mail já cadastrado");
 			}
 		});
-		if (request.role() == UserRole.ADMIN && user.getRole() != UserRole.ADMIN) {
+		if (request.getRole() == UserRole.ADMIN && user.getRole() != UserRole.ADMIN) {
 			throw new BadRequestException("Papel de administrador só pode ser definido diretamente no banco de dados");
 		}
-		user.setName(request.name().trim());
+		user.setName(request.getName().trim());
 		user.setEmail(email);
-		user.setPhone(trimToNull(request.phone()));
-		user.setRole(request.role());
-		if (request.password() != null && !request.password().isBlank()) {
-			if (request.password().length() < 6) {
+		user.setPhone(trimToNull(request.getPhone()));
+		user.setRole(request.getRole());
+		if (request.getPassword() != null && !request.getPassword().isBlank()) {
+			if (request.getPassword().length() < 6) {
 				throw new BadRequestException("Senha deve ter pelo menos 6 caracteres");
 			}
-			user.setPasswordHash(passwordEncoder.encode(request.password()));
+			user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 		}
 		return toResponse(userRepository.save(user));
 	}
@@ -99,7 +99,7 @@ public class UserService {
 	public UserResponse assignGroup(Long id, AssignUserGroupRequest request) {
 		accessPolicy.requireAdmin(currentUserService.requireCurrent());
 		User user = requireActiveUser(id);
-		var group = groupService.requireActiveGroup(request.groupId());
+		var group = groupService.requireActiveGroup(request.getGroupId());
 		user.setGroup(group);
 		return toResponse(userRepository.save(user));
 	}

@@ -41,7 +41,7 @@ public class ChurchService {
 
 	public ChurchResponse create(CreateChurchRequest request) {
 		accessPolicy.requireAdmin(currentUserService.requireCurrent());
-		Church church = Church.builder().name(request.name().trim()).build();
+		Church church = Church.builder().name(request.getName().trim()).build();
 		return toResponse(churchRepository.save(church));
 	}
 
@@ -51,7 +51,7 @@ public class ChurchService {
 		if (!church.isActive()) {
 			throw new NotFoundException("Igreja não encontrada");
 		}
-		church.setName(request.name().trim());
+		church.setName(request.getName().trim());
 		return toResponse(churchRepository.save(church));
 	}
 

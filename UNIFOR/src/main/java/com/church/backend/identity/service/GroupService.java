@@ -88,8 +88,8 @@ public class GroupService {
 		var church = churchService.requireActiveChurch(churchId);
 		Group group = Group.builder()
 				.church(church)
-				.name(request.name().trim())
-				.description(request.description() != null ? request.description().trim() : null)
+				.name(request.getName().trim())
+				.description(request.getDescription() != null ? request.getDescription().trim() : null)
 				.build();
 		return toResponse(groupRepository.save(group));
 	}
@@ -97,22 +97,22 @@ public class GroupService {
 	public GroupResponse update(Long id, UpdateGroupRequest request) {
 		accessPolicy.requireAdmin(currentUserService.requireCurrent());
 		Group group = requireActiveGroup(id);
-		group.setName(request.name().trim());
-		group.setDescription(request.description() != null ? request.description().trim() : null);
+		group.setName(request.getName().trim());
+		group.setDescription(request.getDescription() != null ? request.getDescription().trim() : null);
 		return toResponse(groupRepository.save(group));
 	}
 
 	public GroupResponse assignLeader(Long id, AssignLeaderRequest request) {
 		accessPolicy.requireAdmin(currentUserService.requireCurrent());
 		Group group = requireActiveGroup(id);
-		if (request.leaderUserId() == null) {
+		if (request.getLeaderUserId() == null) {
 			if (group.getLeader() != null) {
 				groupLeaderRepository.deleteByUserIdAndGroupId(group.getLeader().getId(), group.getId());
 			}
 			group.setLeader(null);
 			return toResponse(groupRepository.save(group));
 		}
-		var leader = userRepository.findById(request.leaderUserId())
+		var leader = userRepository.findById(request.getLeaderUserId())
 				.orElseThrow(() -> new NotFoundException("Líder não encontrado"));
 		if (!leader.isActive()) {
 			throw new BadRequestException("Usuário inativo");

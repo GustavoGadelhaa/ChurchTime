@@ -39,7 +39,7 @@ public class PasswordResetService {
 
 	@Transactional
 	public void requestReset(ForgotPasswordRequest request) {
-		userRepository.findByEmailIgnoreCase(request.email())
+		userRepository.findByEmailIgnoreCase(request.getEmail())
 				.ifPresentOrElse(user -> {
 					tokenRepository.markAllUsedByUserId(user.getId());
 					String token = generateToken();
@@ -54,13 +54,13 @@ public class PasswordResetService {
 
 					sendResetEmail(user.getEmail(), user.getName(), token);
 				}, () -> {
-					log.info("Password reset requested for non-existent email: {}", request.email());
+					log.info("Password reset requested for non-existent email: {}", request.getEmail());
 				});
 	}
 
 	@Transactional
 	public void resetPassword(ResetPasswordRequest request) {
-		PasswordResetToken resetToken = tokenRepository.findByToken(request.token())
+		PasswordResetToken resetToken = tokenRepository.findByToken(request.getToken())
 				.orElseThrow(() -> new BadRequestException("Token inválido"));
 
 		if (resetToken.isUsed()) {
@@ -72,7 +72,7 @@ public class PasswordResetService {
 		}
 
 		User user = resetToken.getUser();
-		user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+		user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
 		userRepository.save(user);
 
 		resetToken.setUsed(true);

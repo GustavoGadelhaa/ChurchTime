@@ -2,6 +2,9 @@ package com.church.backend.identity.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 import java.time.Instant;
 
@@ -10,16 +13,28 @@ public final class ChurchDtos {
 	private ChurchDtos() {
 	}
 
-	public record ChurchResponse(Long id, String name, boolean active, Instant createdAt) {
+	@Data
+	@AllArgsConstructor
+	public static class ChurchResponse {
+		private Long id;
+		private String name;
+		private boolean active;
+		private Instant createdAt;
 	}
 
-	public record CreateChurchRequest(
-			@NotBlank @Size(max = 150) String name
-	) {
+	@Data
+	@AllArgsConstructor
+	public static class CreateChurchRequest {
+		@NotBlank
+		@Size(max = 150)
+		private String name;
 	}
 
-	public record UpdateChurchRequest(
-			@NotBlank @Size(max = 150) String name
-	) {
+	@Data
+	@AllArgsConstructor
+	public static class UpdateChurchRequest {
+		@NotBlank
+		@Size(max = 150)
+		private String name;
 	}
 }
