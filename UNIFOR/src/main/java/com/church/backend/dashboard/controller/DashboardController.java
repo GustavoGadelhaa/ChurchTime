@@ -33,20 +33,32 @@ public class DashboardController {
     public ResponseEntity<Map<String, Object>> getDashboardStats() {
         User currentUser = currentUserService.requireCurrent();
         
-        Long churchId = currentUser.getGroup() != null ? 
-                        currentUser.getGroup().getChurch().getId() : 
-                        null;
-        
-        if (churchId == null) {
-            churchId = getDefaultChurchId();
-        }
-        
         Map<String, Object> stats = new HashMap<>();
         
-        stats.put("totalGroups", groupRepository.countByChurchIdAndActiveTrue(churchId));
-        stats.put("openEvents", eventRepository.countByChurchIdAndStatus(churchId, EventStatus.OPEN));
-        stats.put("activeMembers", userRepository.countByChurchIdAndActiveTrue(churchId));
-        stats.put("todayCheckins", presenceRepository.countTodayCheckinsByChurchId(churchId));
+        if (currentUser.getGroup() == null) {
+            stats.put("message", "Usuário sem grupo associado");
+            stats.put("test", Map.of("name", "No group", "members", 0));
+            return ResponseEntity.ok(stats);
+        }
+        
+        Long churchId = currentUser.getGroup().getChurch().getId();
+        Long groupId = currentUser.getGroup().getId();
+        String role = String.valueOf(currentUser.getRole());
+        
+        stats.put("yourGroup", currentUser.getGroup().getName());
+        stats.put("role", role);
+        
+        if ("LEADER".equals(role)) {
+            stats.put("totalGroups", groupRepository.countByChurchIdAndActiveTrue(churchId));
+            stats.put("openEvents", eventRepository.countByChurchIdAndStatus(churchId, EventStatus.OPEN));
+            stats.put("activeMembers", userRepository.countByChurchIdAndActiveTrue(churchId));
+            stats.put("todayCheckins", presenceRepository.countTodayCheckinsByChurchId(churchId));
+            stats.put("groupMembers", userRepository.countByGroupIdAndActiveTrue(groupId));
+            stats.put("groupOpenEvents", eventRepository.countByGroupIdAndStatus(groupId, EventStatus.OPEN));
+        } else {
+            stats.put("myEvents", eventRepository.countByGroupIdAndStatus(groupId, EventStatus.OPEN));
+            stats.put("myGroupMembers", userRepository.countByGroupIdAndActiveTrue(groupId));
+        }
         
         return ResponseEntity.ok(stats);
     }

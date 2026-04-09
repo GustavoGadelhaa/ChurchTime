@@ -35,4 +35,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	@Query("SELECT c.id FROM Church c WHERE c.active = true ORDER BY c.id LIMIT 1")
 	Long findFirstActiveChurchId();
+
+	@Query("SELECT g.name FROM User u JOIN u.group g WHERE u.email = :email")
+	String findGroupNameByEmail(@Param("email") String email);
 }
