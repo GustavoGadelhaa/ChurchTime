@@ -16,6 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 			select distinct u from User u
 			left join fetch u.group g
 			left join fetch g.church c
+			left join fetch g.leader
 			where lower(u.email) = lower(:email)
 			""")
 	Optional<User> findByEmailForSession(@Param("email") String email);

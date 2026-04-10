@@ -6,13 +6,11 @@ import com.church.backend.identity.entity.PasswordResetToken;
 import com.church.backend.identity.entity.User;
 import com.church.backend.identity.repository.PasswordResetTokenRepository;
 import com.church.backend.identity.repository.UserRepository;
+import com.church.backend.shared.email.EmailService;
 import com.church.backend.shared.exception.BadRequestException;
 import com.church.backend.shared.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,11 +29,8 @@ public class PasswordResetService {
 
 	private final UserRepository userRepository;
 	private final PasswordResetTokenRepository tokenRepository;
-	private final JavaMailSender mailSender;
+	private final EmailService emailService;
 	private final PasswordEncoder passwordEncoder;
-
-	@Value("${app.mail.from:ChurchTime <techjga@gmail.com>}")
-	private String mailFrom;
 
 	@Transactional
 	public void requestReset(ForgotPasswordRequest request) {
@@ -85,25 +80,14 @@ public class PasswordResetService {
 	}
 
 	private void sendResetEmail(String to, String name, String token) {
-		try {
-			SimpleMailMessage message = new SimpleMailMessage();
-			message.setFrom(mailFrom);
-			message.setTo(to);
-			message.setSubject("ChurchTime - Recuperação de Senha");
-			message.setText(
-					"Olá, " + name + "!\n\n" +
-					"Recebemos uma solicitação de recuperação de senha para sua conta no ChurchTime.\n\n" +
-					"Seu código de recuperação é: " + token + "\n\n" +
-					"Este código expira em " + EXPIRATION_MINUTES + " minutos.\n" +
-					"Se você não solicitou esta recuperação, ignore este email.\n\n" +
-					"Atenciosamente,\n" +
-					"Equipe ChurchTime"
-			);
-			mailSender.send(message);
-			log.info("Password reset email sent to {}", to);
-		} catch (Exception e) {
-			log.error("Failed to send password reset email to {}: {}", to, e.getMessage());
-			throw new RuntimeException("Não foi possível enviar o e-mail de recuperação. Verifique a configuração do servidor de e-mail.");
-		}
+		String subject = "ChurchTime - Recuperação de Senha";
+		String body = "Olá, " + name + "!\n\n" +
+				"Recebemos uma solicitação de recuperação de senha para sua conta no ChurchTime.\n\n" +
+				"Seu código de recuperação é: " + token + "\n\n" +
+				"Este código expira em " + EXPIRATION_MINUTES + " minutos.\n" +
+				"Se você não solicitou esta recuperação, ignore este email.\n\n" +
+				"Atenciosamente,\n" +
+				"Equipe ChurchTime";
+		emailService.send(to, subject, body);
 	}
 }

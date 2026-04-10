@@ -75,7 +75,7 @@ public class AccessPolicy {
 			return;
 		}
 		if (current.getRole() == UserRole.LEADER) {
-			Group g = groupRepository.findById(groupId).orElseThrow(() -> new NotFoundException("Grupo não encontrado"));
+			Group g = groupRepository.findByIdWithLeader(groupId).orElseThrow(() -> new NotFoundException("Grupo não encontrado"));
 			if (g.getLeader() != null && g.getLeader().getId().equals(current.getId())) {
 				return;
 			}

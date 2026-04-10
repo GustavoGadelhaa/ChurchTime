@@ -193,6 +193,13 @@ public class GroupService {
 		return group;
 	}
 
+	@Transactional(readOnly = true)
+	public List<User> listActiveUsersByGroup(Long groupId) {
+		accessPolicy.requireGroupRead(groupId, currentUserService.requireCurrent());
+		requireActiveGroup(groupId);
+		return userRepository.findByGroupIdAndActiveTrueOrderByNameAsc(groupId);
+	}
+
 	private static GroupResponse toResponse(Group group) {
 		Long leaderId = group.getLeader() != null ? group.getLeader().getId() : null;
 		return new GroupResponse(
